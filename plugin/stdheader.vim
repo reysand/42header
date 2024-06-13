@@ -1,149 +1,146 @@
-let s:asciiart = [
-			\"        :::      ::::::::",
-			\"      :+:      :+:    :+:",
-			\"    +:+ +:+         +:+  ",
-			\"  +#+  +:+       +#+     ",
-			\"+#+#+#+#+#+   +#+        ",
-			\"     #+#    #+#          ",
+vim9script
+
+var asciiart = [
+			\"        :::      ::::::::", 
+			\"      :+:      :+:    :+:", 
+			\"    +:+ +:+         +:+  ", 
+			\"  +#+  +:+       +#+     ", 
+			\"+#+#+#+#+#+   +#+        ", 
+			\"     #+#    #+#          ", 
 			\"    ###   ########.fr    "
 			\]
 
-let s:start		= '/*'
-let s:end		= '*/'
-let s:fill		= '*'
-let s:length	= 80
-let s:margin	= 5
+var start = '/*'
+var end = '*/'
+var fill = '*'
+var length = 80
+var margin = 5
 
-let s:types		= {
-			\'\.c$\|\.h$\|\.cc$\|\.hh$\|\.cpp$\|\.hpp$\|\.php':
-			\['/*', '*/', '*'],
-			\'\.htm$\|\.html$\|\.xml$':
-			\['<!--', '-->', '*'],
-			\'\.js$':
-			\['//', '//', '*'],
-			\'\.tex$':
-			\['%', '%', '*'],
-			\'\.ml$\|\.mli$\|\.mll$\|\.mly$':
-			\['(*', '*)', '*'],
-			\'\.vim$\|\vimrc$':
-			\['"', '"', '*'],
-			\'\.el$\|\emacs$':
-			\[';', ';', '*'],
-			\'\.f90$\|\.f95$\|\.f03$\|\.f$\|\.for$':
+var types = {
+			\'\.c$\|\.h$\|\.cc$\|\.hh$\|\.cpp$\|\.hpp$\|\.php': 
+			\['/*', '*/', '*'], 
+			\'\.htm$\|\.html$\|\.xml$': 
+			\['<!--', '-->', '*'], 
+			\'\.js$': 
+			\['//', '//', '*'], 
+			\'\.tex$': 
+			\['%', '%', '*'], 
+			\'\.ml$\|\.mli$\|\.mll$\|\.mly$': 
+			\['(*', '*)', '*'], 
+			\'\.vim$\|\vimrc$': 
+			\['"', '"', '*'], 
+			\'\.el$\|\emacs$': 
+			\[';', ';', '*'], 
+			\'\.f90$\|\.f95$\|\.f03$\|\.f$\|\.for$': 
 			\['!', '!', '/']
 			\}
 
-function! s:filetype()
-	let l:f = s:filename()
+def Filetype()
+	var f = Filename()
 
-	let s:start	= '#'
-	let s:end	= '#'
-	let s:fill	= '*'
-
-	for type in keys(s:types)
-		if l:f =~ type
-			let s:start	= s:types[type][0]
-			let s:end	= s:types[type][1]
-			let s:fill	= s:types[type][2]
+	for type in keys(types)
+		if f =~ type
+			start = types[type][0]
+			end = types[type][1]
+			fill = types[type][2]
 		endif
 	endfor
+enddef
 
-endfunction
+def Ascii(n: number): string
+	return asciiart[n - 3]
+enddef
 
-function! s:ascii(n)
-	return s:asciiart[a:n - 3]
-endfunction
+def Textline(left: string, right: string): string
+	return start .. repeat(' ', margin - strlen(start)) .. left .. repeat(' ', length - margin * 2 - strlen(left) - strlen(right)) .. right .. repeat(' ', margin - strlen(end)) .. end
+enddef
 
-function! s:textline(left, right)
-	let l:left = strpart(a:left, 0, s:length - s:margin * 2 - strlen(a:right))
-
-	return s:start . repeat(' ', s:margin - strlen(s:start)) . l:left . repeat(' ', s:length - s:margin * 2 - strlen(l:left) - strlen(a:right)) . a:right . repeat(' ', s:margin - strlen(s:end)) . s:end
-endfunction
-
-function! s:line(n)
-	if a:n == 1 || a:n == 11 " top and bottom line
-		return s:start . ' ' . repeat(s:fill, s:length - strlen(s:start) - strlen(s:end) - 2) . ' ' . s:end
-	elseif a:n == 2 || a:n == 10 " blank line
-		return s:textline('', '')
-	elseif a:n == 3 || a:n == 5 || a:n == 7 " empty with ascii
-		return s:textline('', s:ascii(a:n))
-	elseif a:n == 4 " filename
-		return s:textline(s:filename(), s:ascii(a:n))
-	elseif a:n == 6 " author
-		return s:textline("By: " . s:user() . " <" . s:mail() . ">", s:ascii(a:n))
-	elseif a:n == 8 " created
-		return s:textline("Created: " . s:date() . " by " . s:user(), s:ascii(a:n))
-	elseif a:n == 9 " updated
-		return s:textline("Updated: " . s:date() . " by " . s:user(), s:ascii(a:n))
+def Line(n: number): string
+	if n == 1 || n == 11 # top and bottom line
+		return start .. ' ' .. repeat(fill, length - strlen(start) - strlen(end) - 2) .. ' ' .. end
+	elseif n == 2 || n == 10 # blank line
+		return Textline('', '')
+	elseif n == 3 || n == 5 || n == 7 # empty with ascii
+		return Textline('', Ascii(n))
+	elseif n == 4 # filename
+		return Textline(Filename(), Ascii(n))
+	elseif n == 6 # author
+		return Textline("By: " .. User() .. " <" .. Mail() .. ">", Ascii(n))
+	elseif n == 8 # created
+		return Textline("Created: " .. Date() .. " by " .. User(), Ascii(n))
+	elseif n == 9 # updated
+		return Textline("Updated: " .. Date() .. " by " .. User(), Ascii(n))
+	else
+		return " "
 	endif
-endfunction
+enddef
 
-function! s:user()
+def User(): string
 	if exists('g:user42')
 		return g:user42
 	endif
-	let l:user = $USER
-	if strlen(l:user) == 0
-		let l:user = "marvin"
+	var user = $USER
+	if strlen(user) == 0
+		user = "marvin"
 	endif
-	return l:user
-endfunction
+	return user
+enddef
 
-function! s:mail()
+def Mail(): string
 	if exists('g:mail42')
 		return g:mail42
 	endif
-	let l:mail = $MAIL
-	if strlen(l:mail) == 0
-		let l:mail = "marvin@42.fr"
+	var mail = $MAIL
+	if strlen(mail) == 0
+		mail = "marvin@42.fr"
 	endif
-	return l:mail
-endfunction
+	return mail
+enddef
 
-function! s:filename()
-	let l:filename = expand("%:t")
-	if strlen(l:filename) == 0
-		let l:filename = "< new >"
+def Filename(): string
+	var filename = expand("%:t")
+	if strlen(filename) == 0
+		filename = "< new >"
 	endif
-	return l:filename
-endfunction
+	return filename
+enddef
 
-function! s:date()
+def Date(): string
 	return strftime("%Y/%m/%d %H:%M:%S")
-endfunction
+enddef
 
-function! s:insert()
-	let l:line = 11
+def Insert()
+	var line = 11
 
-	" empty line after header
-	call append(0, "")
+	# empty line after header
+	append(0, "")
 
-	" loop over lines
-	while l:line > 0
-		call append(0, s:line(l:line))
-		let l:line = l:line - 1
+	# loop over lines
+	while line > 0
+		append(0, Line(line))
+		line = line - 1
 	endwhile
-endfunction
+enddef
 
-function! s:update()
-	call s:filetype()
-	if getline(9) =~ s:start . repeat(' ', s:margin - strlen(s:start)) . "Updated: "
+def Update(): bool
+	Filetype()
+	if getline(9) =~ start .. repeat(' ', margin - strlen(start)) .. "Updated: "
 		if &mod
-			call setline(9, s:line(9))
+			setline(9, Line(9))
 		endif
-		call setline(4, s:line(4))
+		setline(4, Line(4))
 		return 0
 	endif
 	return 1
-endfunction
+enddef
 
-function! s:stdheader()
-	if s:update()
-		call s:insert()
+def Stdheader()
+	if Update()
+		Insert()
 	endif
-endfunction
+enddef
 
-" Bind command and shortcut
-command! Stdheader call s:stdheader ()
+## Bind command and shortcut
+command! Stdheader Stdheader()
 map <F1> :Stdheader<CR>
-autocmd BufWritePre * call s:update ()
+autocmd BufWritePre * Update()
